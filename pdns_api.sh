@@ -203,8 +203,16 @@ setup_domain() {
   token="$2"
   zone=""
 
-  # Record name
-  name="_acme-challenge.${domain}"
+  #record name
+  if [[ "${domain}" =~ ^[*]\.([^*]+) ]]; then
+        rootdomain="${BASH_REMATCH[1]}"
+	wildcard=true
+        name="_acme-challenge.${rootdomain}"
+	#warn "domain is a wildcard domain, acme challenge will be for ${name}"
+  else
+  	wildcard=false
+        name="_acme-challenge.${domain}"
+  fi
 
   # Read name parts into array
   IFS='.' read -ra name_array <<< "${name}"
@@ -362,6 +370,9 @@ main() {
 
     # Deploy a token
     if [[ "${hook}" = "deploy_challenge" ]]; then
+      if [[ $wildcard = true ]]; then
+      	warn "domain is a wildcard domain, acme challenge will be for ${name}"
+      fi
       requests[${zone}]="${req}$(deploy_rrset)"
     fi
 
